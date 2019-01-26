@@ -12,9 +12,3 @@ type Mutation {
   # Delete a link
   deleteLink(id: ID!): Link
 }
-
-type Link {
-  id: ID!,
-  description: String!,
-  url: String!
-}

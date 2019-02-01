@@ -1,28 +1,13 @@
 const { GraphQLServer } = require("graphql-yoga");
-
-// Resolver data for Feed
-let links = [
-  {
-    id: "link-0",
-    url: "www.howtographql.com",
-    description: "Fullstack tutorial for GraphQL"
-  },
-  {
-    id: "link-1",
-    url: "www.google.com",
-    description: "Search engine site"
-  }
-];
-
-/* How GraphQL resolver. If the resolver returns null for any mandatory fields, it will
-throw error */
-let idCount = links.length;
+const { prisma } = require("./generated/prisma-client");
 
 // We have resolvers for all Query and Mutations in Schema
 const resolvers = {
   Query: {
     info: () => `This is API of Hackernews clone`,
-    feed: () => links,
+    feed: (root, args, context, info) => {
+      return context.prisma.links();
+    },
     link: (parent, args) => links[args.id]
   },
   Link: {
@@ -31,14 +16,11 @@ const resolvers = {
     url: parent => parent.url
   },
   Mutation: {
-    post: (parent, args) => {
-      const link = {
-        id: `link-${idCount++}`,
-        description: args.description,
-        url: args.url
-      };
-      links.push(link);
-      return link;
+    post: (root, args, context) => {
+      return context.prisma.createLink({
+        url: args.url,
+        description: args.description
+      });
     },
     updateLink: (parent, args) => {
       const link = links[args.id];
@@ -55,6 +37,7 @@ const resolvers = {
 
 const server = new GraphQLServer({
   typeDefs: "./src/schema.graphql",
-  resolvers
+  resolvers,
+  context: { prisma }
 });
 server.start(() => console.log(`Server is running on http://localhost:4000`));
